@@ -29,7 +29,7 @@ class Board:
 
     
     def generate_final_state(self):
-        elements = [x for x in range(self.dimension**2)]
+        elements = [x for x in range(1, self.dimension**2)] + [0]
         final_state = []
         while(elements):
             final_state.append(elements[:self.dimension])
@@ -37,5 +37,8 @@ class Board:
         
         return final_state
 
+    def __eq__(self, other):
+        return self.board == other.board
+    
     def __ne__(self, other):
-        self.board != other.board
+        return self.board != other.board

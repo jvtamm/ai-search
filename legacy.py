@@ -57,6 +57,29 @@ def search(initial_state, frontier_fn,  dimension, args=None):
 
     return False
 
+# def search_1(initial_state, creator, update, dimension, args=None):
+# 	frontier = creator()
+# 	frontier.put(Node(Board(initial_state, dimension=dimension)))
+# 	explored = []
+
+# 	while(not frontier.empty()):
+# 		node = frontier.get()
+# 		explored.append(node)
+
+# 		if(node.state.check_final_state()):
+# 			return node
+
+# 		for child in node.expand():
+# 			if(child not in explored and child not in frontier.queue):
+# 				print(child.depth) 
+# 				update(frontier, child, args)
+
+# 		# print([node.state.board for node in frontier.queue])
+# 		# print([vars(node) for node in frontier.queue])
+# 		# print()
+	
+# 	return False
+
 def bfs(initial_state, dimension=3):
 	return search(initial_state, queue("fifo"), dimension)
 
