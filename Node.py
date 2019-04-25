@@ -1,9 +1,21 @@
 class Node:
-    def __init__(self, board, parent=None):
+    def __init__(self, board, cost_fn=None, parent=None):
         self.state = board
         self.parent = parent
         self.depth = self.parent.depth + 1 if self.parent else 0
-        self.cost = 0
+        self.cost_fn = self.parent.cost_fn if self.parent else cost_fn
+        
+        self.set_cost()
+
+
+    def set_cost(self):
+        if(self.parent and self.cost_fn): self.cost_fn(self)
+        else: self.cost = 0
+
+    def update(self, new_parent, new_depth, new_cost):
+        self.cost = new_cost
+        self.parent = new_parent
+        self.depth = new_depth
 
     def expand(self):
         children = []

@@ -8,8 +8,8 @@ from Node import Node
 from Board import Board
 from Frontier import Frontier
 
-def search(initial_state, frontier, dimension):
-	initial_node = Node(Board(initial_state, dimension=dimension))
+def search(initial_state, frontier, dimension, cost_fn=None):
+	initial_node = Node(Board(initial_state, dimension=dimension), cost_fn=cost_fn)
 	frontier.insert(initial_node)
 
 	explored = []
@@ -22,10 +22,16 @@ def search(initial_state, frontier, dimension):
 			return node
 
 		for child in node.expand():
-			if(child not in explored and not frontier.check_node(child)):
+			# Checks if node in frontier and get reference if it is
+			alternative_node = frontier.check_node(child)
+
+			# If not explored and not in frontier just add it
+			if(child not in explored and not alternative_node):
 				frontier.update(child)
-			
-			# Need to implement frontier replacement
+
+			# If node already in frontier but with higher cost just replace it
+			if(alternative_node and alternative_node.cost > child.cost):
+				alternative_node.update(child.parent, child.depth, child.cost)
 
 		# print([node.state.board for node in frontier.queue])
 		# print([vars(node) for node in frontier.queue])
@@ -47,7 +53,12 @@ def ids(initial_state, dimension=3):
 			return solution
 
 def uniform_cost(initial_state, dimension=3):
-	return search(initial_state, Frontier(PriorityQueue), dimension)
+	"""  Searches for solution applying uniform cost search algorithm. """
+
+	def add_cost(node):
+		node.cost = node.depth
+
+	return search(initial_state, Frontier(PriorityQueue), dimension, cost_fn=add_cost)
 
 def manhattan_distance(puzzle):
 	""" Heuristic Function to calculate the cost to take every number to correct place using manhattan distance"""
@@ -78,22 +89,21 @@ def greedy(initial_state, dimension=3):
 
 	def add_cost(node):
 		node.cost = misplaced_nodes(node.state)
-		return node
 
-	return search(initial_state, Frontier(PriorityQueue,update_filter=add_cost), dimension)
+	return search(initial_state, Frontier(PriorityQueue), dimension, cost_fn=add_cost)
 
 def a_star(initial_state, dimension=3):
 	"""  Searches for solution applying a star search algorithm with manhattan distance heuristic. """
+
 	def add_cost(node):
 		node.cost = node.depth + manhattan_distance(node.state)
-		return node
 
-	return search(initial_state, Frontier(PriorityQueue, update_filter=add_cost), dimension)
+	return search(initial_state, Frontier(PriorityQueue), dimension, cost_fn=add_cost)
 
 if __name__ == "__main__":
 	# initial_state = [[1,2,5],[3,4,0],[6,7,8]]
-	initial_state = [[4,1,2], [8,7,3], [5,6,0]]
-	# initial_state = [[8,1,4], [3,7,5], [0,2,6]]
+	# initial_state = [[4,1,2], [8,7,3], [5,6,0]]
+	initial_state = [[8,1,4], [3,7,5], [0,2,6]]
 	# initial_state = [[1, 2, 3, 0], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15]]
 
 	result_node = a_star(initial_state)
