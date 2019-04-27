@@ -15,6 +15,9 @@ class Frontier:
     def get(self):
         return self.data.get()
 
+    def length(self):
+        return len(self.data.queue)
+
     def check_node(self, node):
         for current_node in self.data.queue:
             if (current_node == node): return node

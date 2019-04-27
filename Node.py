@@ -7,10 +7,9 @@ class Node:
         
         self.set_cost()
 
-
     def set_cost(self):
-        if(self.parent and self.cost_fn): self.cost_fn(self)
-        else: self.cost = 0
+        if(not self.cost_fn): self.cost = 0
+        else: self.cost_fn(self)
 
     def update(self, new_parent, new_depth, new_cost):
         self.cost = new_cost

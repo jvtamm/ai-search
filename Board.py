@@ -27,7 +27,6 @@ class Board:
 
         return Board(new_board, (x + dx, y + dy), self.dimension)
 
-    
     def generate_final_state(self):
         elements = [x for x in range(1, self.dimension**2)] + [0]
         final_state = []
