@@ -9,17 +9,17 @@ from Solution import Solution
 def search(initial_state, frontier, dimension, cost_fn=None):
 	initial_node = Node(Board(initial_state, dimension=dimension), cost_fn=cost_fn)
 	frontier.insert(initial_node)
-	steps = 0
+	# steps = 0
 
 	explored = []
 
 	while(not frontier.empty()):
 		node = frontier.get()
 		explored.append(node)
-		steps += 1
+		# steps += 1
 
 		if(node.state.check_final_state()):
-			solution = Solution(node, len(explored), frontier.length(), steps)
+			solution = Solution(node, len(explored), frontier.length())
 			return solution
 
 		for child in node.expand():
@@ -102,16 +102,17 @@ def a_star(initial_state, heuristic, dimension=3):
 	return search(initial_state, Frontier(PriorityQueue), dimension, cost_fn=add_cost)
 
 def hill_climbing(initial_state, heuristic, limit=1000, dimension=3):
-
 	def add_cost(node):
 		node.cost = node.depth + heuristic(node.state)
 
 	current_node = Node(Board(initial_state, dimension=dimension), cost_fn=add_cost)
 	side_moves = 0
+	steps = 0
 
 	while True:
+		steps += 1
 		if(side_moves > limit):
-			return current_node
+			return Solution(current_node, steps, 0)
 	
 		best_neighbour = None
 		for child in current_node.expand():
@@ -120,7 +121,7 @@ def hill_climbing(initial_state, heuristic, limit=1000, dimension=3):
 				best_neighbour = child
 
 		if(best_neighbour.cost > current_node.cost):
-			return current_node
+			return Solution(current_node, steps, 0)
 		
 		if(best_neighbour.cost == current_node.cost):
 			side_moves += 1
