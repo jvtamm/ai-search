@@ -7,7 +7,7 @@ class Solution:
         self.trace_solution(node)
 
     def print_solution(self):
-        print('Solution Path:', ' -> '.join(map(str, self.path)))
+        print('Solution Path:', ' -> '.join(self.path))
         print('Expanded nodes: %s / %s' % (self.explored, self.total_nodes))
         print('Steps:', self.steps)
 
@@ -15,5 +15,5 @@ class Solution:
         self.path = []
         current_node = final_node
         while(current_node):
-            self.path.insert(0, current_node.state.board)
+            self.path.insert(0, str(current_node.state.board))
             current_node = current_node.parent
