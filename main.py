@@ -1,4 +1,4 @@
-import sys, math, argparse
+import sys, math, argparse, time
 from queue import Queue, LifoQueue, PriorityQueue
 
 from Node import Node
@@ -6,7 +6,12 @@ from Board import Board
 from Frontier import Frontier
 from Solution import Solution
 
-def search(initial_state, frontier, dimension, cost_fn=None):
+# TODO: Remove global variable and convert to class
+explored_nodes = 0
+
+def search(initial_state, frontier, dimension, cost_fn=None, check_explored=True):
+	global explored_nodes
+
 	initial_node = Node(Board(initial_state, dimension=dimension), cost_fn=cost_fn)
 	frontier.insert(initial_node)
 	# steps = 0
@@ -15,29 +20,28 @@ def search(initial_state, frontier, dimension, cost_fn=None):
 
 	while(not frontier.empty()):
 		node = frontier.get()
-		explored.append(node)
 		# steps += 1
 
+		explored_nodes += 1
 		if(node.state.check_final_state()):
 			solution = Solution(node, len(explored), frontier.length())
 			return solution
 
+		explored.append(node)
+
 		for child in node.expand():
 			# Checks if node in frontier and get reference if it is
 			alternative_node = frontier.check_node(child)
+			should_expand = (not check_explored) or (child not in explored)
 
 			# If not explored and not in frontier just add it
-			if(child not in explored and not alternative_node):
+			if(should_expand and not alternative_node):
 				frontier.update(child)
 
 			# If node already in frontier but with higher cost just replace it
 			if(alternative_node and alternative_node.cost > child.cost):
 				alternative_node.update(child.parent, child.depth, child.cost)
 
-		# print([node.state.board for node in frontier.queue])
-		# print([vars(node) for node in frontier.queue])
-		# print()
-	
 	return False
 
 def bfs(initial_state, dimension=3):
@@ -48,9 +52,18 @@ def bfs(initial_state, dimension=3):
 def ids(initial_state, dimension=3):
 	"""  Searches for solution applying iterative deepening search algorithm. """
 
+	global explored_nodes
+
 	for max_depth in range(sys.maxsize):
-		solution = search(initial_state, Frontier(LifoQueue, update_filter=lambda x: x if x.depth <= max_depth else False), dimension)
+		solution = search(
+			initial_state, 
+			Frontier(LifoQueue, update_filter=lambda x: False if x.depth > max_depth else x), 
+			dimension, 
+			check_explored=False
+		)
+
 		if(solution):
+			solution.explored = explored_nodes
 			return solution
 
 def uniform_cost(initial_state, dimension=3):
@@ -101,7 +114,7 @@ def a_star(initial_state, heuristic, dimension=3):
 
 	return search(initial_state, Frontier(PriorityQueue), dimension, cost_fn=add_cost)
 
-def hill_climbing(initial_state, heuristic, limit=1000, dimension=3):
+def hill_climbing(initial_state, heuristic, limit=10, dimension=3):
 	def add_cost(node):
 		node.cost = node.depth + heuristic(node.state)
 
@@ -134,18 +147,19 @@ def input_parser():
 	"""Parses execution arguments"""
 
 	parser = argparse.ArgumentParser()
-	parser.add_argument("file", metavar="STATE", type=str, help ='File with initial state')
-	parser.add_argument("algo", metavar="ALGORITHM", type=int, help ='Search algorithm')
-	parser.add_argument("heuristic", metavar="HEURISTIC", nargs="?", type=int, help ='Heuristic')
+	parser.add_argument("file", type=str, help ='File with initial state')
+	parser.add_argument("algo", metavar="algorithm", choices=[1,2,3,4,5,6], type=int, help ='The algorithm to be use. 1 = Breadth First, 2 = Iterative Deepening, 3 = Uniform Cost, 4 = Greedy, 5 = A Star, 6 = Hill Climbing')
+	parser.add_argument("--heuristic", metavar="", choices=[1,2], action = 'store', dest = 'heuristic', required = False, type=int, help='The heuristic to be use in Greedy, A-Star and Hill Climbing algorithms. 1 = Manhattan distance, 2 = Missplaced Tiles.')
+	parser.add_argument('--k', action='store', dest='k', required=False, type=int, default=10, help='The max number of lateral movements in Hill Climbing. The default is 10.')
 
 	args = parser.parse_args()
 
 	if (args.algo > 3 and not args.heuristic):
-		parser.error("For greedy, a_star or hill climbing heuristic is required")
+		parser.error("For Greedy, A Star or Hill Climbing heuristic is required")
 
 	return args
 
-if __name__ == "__main__":
+def main():
 	arguments = input_parser()
 	heuristics_options = [manhattan_distance, misplaced_nodes]
 	algo_options = [bfs, ids, uniform_cost, greedy, a_star, hill_climbing]
@@ -159,22 +173,24 @@ if __name__ == "__main__":
 	algorithm = algo_options[arguments.algo - 1]
 	solution = None
 
+	start_time = time.time()
+
 	if(arguments.heuristic):
 		heuristic = heuristics_options[arguments.heuristic - 1]
-		solution = algorithm(initial_state, heuristic, dimension=dimension)
+		if(arguments.algo == 6): 
+			solution = algorithm(initial_state, heuristic, limit=arguments.k, dimension=dimension)
+		else: 
+			solution = algorithm(initial_state, heuristic, dimension=dimension)
 	else:
 		solution = algorithm(initial_state, dimension=dimension)
 
 
 	if(solution):
 		solution.print_solution()
+		print("Execution Time: ", time.time() - start_time)
+		# solution.print_to_plot(time.time() - start_time)
 	else:
 		print("No solution was found")
 
-# initial_state = [[1,2,5],[3,4,0],[6,7,8]]
-# initial_state = [[4,1,2], [8,7,3], [5,6,0]]
-# initial_state = [[8,1,4], [3,7,5], [0,2,6]]
-# initial_state = [[3,8,5], [0,7,1],[2,6,4]]
-# initial_state = [[1,2,3], [4,5,6], [7,0,8]]
-# initial_state = [[8,7,6], [2,5,4], [3,0,1]]
-# initial_state = [[1, 2, 3, 0], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15]]
+if __name__ == "__main__":
+	main()
